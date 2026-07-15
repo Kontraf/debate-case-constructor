@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debate Case Constructor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Βασικές διορθώσεις για ομαλή εμφάνιση */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .ai-tip { font-size: 0.8rem; color: #4f46e5; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen p-6">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <header class="border-b pb-4 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Debate Case Constructor</h1>
+            <p class="text-gray-500 mt-2">Χτίσε τα επιχειρήματά σου στρατηγικά και δομημένα.</p>
+        </header>
+
+        <section class="mb-8 bg-gray-100 p-6 rounded-lg border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4">Βασικές Πληροφορίες</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-medium mb-1">Θέμα (Motion)</label>
+                    <input type="text" id="motion" class="w-full border-gray-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500" placeholder="Π.χ. Αυτό το Σώμα θα απαγόρευε...">
+                </div>
+                <div>
+                    <label class="block font-medium mb-1">Θέση (Stance)</label>
+                    <select id="stance" class="w-full border-gray-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500">
+                        <option value="Κυβέρνηση (Government)">Κυβέρνηση (Government)</option>
+                        <option value="Αντιπολίτευση (Opposition)">Αντιπολίτευση (Opposition)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <div id="arguments-container">
+            </div>
+
+        <div class="flex justify-between items-center mt-6 border-t pt-6">
+            <button onclick="addArgument()" class="bg-indigo-100 text-indigo-700 font-semibold py-2 px-4 rounded hover:bg-indigo-200 transition">
+                + Προσθήκη Επιχειρήματος
+            </button>
+            <button onclick="exportSpeech()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded shadow hover:bg-green-700 transition">
+                Εξαγωγή Ομιλίας (Export Text)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let argumentCount = 0;
+
+        // Συνάρτηση για προσθήκη νέου block επιχειρήματος
+        function addArgument() {
+            argumentCount++;
+            const container = document.getElementById('arguments-container');
+            
+            const argDiv = document.createElement('div');
+            argDiv.className = "argument-block mb-8 p-6 border-2 border-indigo-50 rounded-lg bg-white shadow-sm";
+            argDiv.id = `arg-${argumentCount}`;
+            
+            argDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-indigo-900">Επιχείρημα #${argumentCount}</h3>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-red-500 text-sm hover:underline">Διαγραφή</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block font-semibold">1. Claim (Ο Ισχυρισμός)</label>
+                        <input type="text" class="arg-claim w-full border-gray-300 rounded border p-2 mt-1" placeholder="Η κεντρική ιδέα σε μία πρόταση...">
+                        <span class="ai-tip">💡 AI Tip: Κράτησε το Claim σύντομο, σαν τίτλο άρθρου.</span>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold">2. Why True (Γιατί ισχύει;)</label>
+                        <textarea class="arg-why-true w-full border-gray-300 rounded border p-2 mt-1 h-24" placeholder="Ανάλυσε τον μηχανισμό..."></textarea>
+                        <span class="ai-tip">💡 AI Tip: Εξήγησε το "πώς" φτάνουμε από το σημείο Α στο σημείο Β. Χρησιμοποίησε λογικά βήματα.</span>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold">3. Why Important (Γιατί είναι σημαντικό;)</label>
+                        <textarea class="arg-why-important w-full border-gray-300 rounded border p-2 mt-1 h-24" placeholder="Ποιος είναι ο αντίκτυπος (impact)..."></textarea>
+                        <span class="ai-tip">💡 AI Tip: Απάντησε στην ερώτηση "Και λοιπόν;". Πώς επηρεάζονται οι εμπλεκόμενοι (stakeholders);</span>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold">4. Examples (Παραδείγματα)</label>
+                        <textarea class="arg-examples w-full border-gray-300 rounded border p-2 mt-1 h-16" placeholder="Ιστορικά δεδομένα, αναλογίες, γεγονότα... (Προαιρετικό)"></textarea>
+                        <span class="ai-tip">💡 AI Tip: Ένα καλό παράδειγμα δεν αποδεικνύει την αλήθεια, αλλά την κάνει πιο κατανοητή.</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(argDiv);
+        }
+
+        // Συνάρτηση για εξαγωγή σε καθαρό κείμενο
+        function exportSpeech() {
+            const motion = document.getElementById('motion').value || '[Δεν δόθηκε θέμα]';
+            const stance = document.getElementById('stance').value;
+            
+            let exportText = `===================================\n`;
+            exportText += `MOTION: ${motion}\n`;
+            exportText += `STANCE: ${stance}\n`;
+            exportText += `===================================\n\n`;
+
+            const argBlocks = document.querySelectorAll('.argument-block');
+            
+            if (argBlocks.length === 0) {
+                alert('Πρόσθεσε τουλάχιστον ένα επιχείρημα πριν κάνεις export!');
+                return;
+            }
+
+            argBlocks.forEach((block, index) => {
+                const claim = block.querySelector('.arg-claim').value || '[Κενό]';
+                const whyTrue = block.querySelector('.arg-why-true').value || '[Κενό]';
+                const whyImportant = block.querySelector('.arg-why-important').value || '[Κενό]';
+                const examples = block.querySelector('.arg-examples').value || '[Κανένα παράδειγμα]';
+
+                exportText += `ΕΠΙΧΕΙΡΗΜΑ ${index + 1}: ${claim.toUpperCase()}\n`;
+                exportText += `-----------------------------------\n`;
+                exportText += `WHY TRUE (Μηχανισμός):\n${whyTrue}\n\n`;
+                exportText += `WHY IMPORTANT (Αντίκτυπος):\n${whyImportant}\n\n`;
+                exportText += `EXAMPLES (Παραδείγματα):\n${examples}\n\n`;
+                exportText += `\n`;
+            });
+
+            // Δημιουργία αρχείου txt και κατέβασμα
+            const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Debate_Case.txt';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Αρχικοποίηση με ένα κενό επιχείρημα
+        window.onload = () => {
+            addArgument();
+        };
+    </script>
+</body>
+</html>
