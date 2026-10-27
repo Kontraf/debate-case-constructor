@@ -73,48 +73,86 @@
 
     <script>
         let argumentCount = 0;
+        const STORAGE_KEY = 'debate-case-v1';
+
+        // Escape text before it goes into HTML, so quotes or tags in AI output cannot break the form
+        function escapeHtml(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Autosave: motion, stance and every argument, so a refresh does not lose the speech
+        function saveState() {
+            try {
+                const args = [...document.querySelectorAll('.argument-block')].map(block => ({
+                    claim: block.querySelector('.arg-claim').value,
+                    whyTrue: block.querySelector('.arg-why-true').value,
+                    whyImportant: block.querySelector('.arg-why-important').value,
+                    examples: block.querySelector('.arg-examples').value,
+                    isAI: block.dataset.ai === '1'
+                }));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    motion: document.getElementById('motion').value,
+                    stance: document.getElementById('stance').value,
+                    args
+                }));
+            } catch (e) { /* storage unavailable (private browsing): keep working without autosave */ }
+        }
+
+        function loadState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (saved && Array.isArray(saved.args)) return saved;
+            } catch (e) { /* ignore corrupt data */ }
+            return null;
+        }
 
         // Add a new (empty or pre-filled) argument block
-        function addArgument(initialData = {}) {
+        function addArgument(initialData = {}, scroll = true) {
             argumentCount++;
             const container = document.getElementById('arguments-container');
             
             const argDiv = document.createElement('div');
             argDiv.className = "argument-block mb-8 p-6 border-2 border-indigo-50 rounded-lg bg-white shadow-sm";
             argDiv.id = `arg-${argumentCount}`;
+            if (initialData.isAI) argDiv.dataset.ai = '1';
             
             argDiv.innerHTML = `
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-indigo-900">Argument #${argumentCount} ${initialData.isAI ? '✨ (AI Generated)' : ''}</h3>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-red-500 text-sm hover:underline">Delete</button>
+                    <button onclick="this.parentElement.parentElement.remove(); saveState();" class="text-red-500 text-sm hover:underline">Delete</button>
                 </div>
                 
                 <div class="space-y-4">
                     <div>
                         <label class="block font-semibold">1. Claim</label>
                         <input type="text" class="arg-claim w-full border-gray-300 rounded border p-2 mt-1" 
-                            placeholder="Your central point in one simple sentence..." value="${initialData.claim || ''}">
+                            placeholder="Your central point in one simple sentence..." value="${escapeHtml(initialData.claim)}">
                         <span class="ai-tip">💡 AI Tip: Keep the Claim short and punchy, like a newspaper headline.</span>
                     </div>
 
                     <div>
                         <label class="block font-semibold">2. Why True</label>
                         <textarea class="arg-why-true w-full border-gray-300 rounded border p-2 mt-1 h-28" 
-                            placeholder="Analyze the logical mechanism...">${initialData.whyTrue || ''}</textarea>
+                            placeholder="Analyze the logical mechanism...">${escapeHtml(initialData.whyTrue)}</textarea>
                         <span class="ai-tip">💡 AI Tip: Explain 'how' we get from point A to point B. Break it down into logical steps.</span>
                     </div>
 
                     <div>
                         <label class="block font-semibold">3. Why Important</label>
                         <textarea class="arg-why-important w-full border-gray-300 rounded border p-2 mt-1 h-28" 
-                            placeholder="What is the impact of this argument...">${initialData.whyImportant || ''}</textarea>
+                            placeholder="What is the impact of this argument...">${escapeHtml(initialData.whyImportant)}</textarea>
                         <span class="ai-tip">💡 AI Tip: Answer the question 'So what?'. How are key stakeholders affected?</span>
                     </div>
 
                     <div>
                         <label class="block font-semibold">4. Examples (Optional)</label>
                         <textarea class="arg-examples w-full border-gray-300 rounded border p-2 mt-1 h-16" 
-                            placeholder="Historical facts, statistics, analogies...">${initialData.examples || ''}</textarea>
+                            placeholder="Historical facts, statistics, analogies...">${escapeHtml(initialData.examples)}</textarea>
                         <span class="ai-tip">💡 AI Tip: A good example makes your logical analysis easier to visualize and understand.</span>
                     </div>
                 </div>
@@ -122,7 +160,8 @@
             container.appendChild(argDiv);
             
             // Smoothly scroll to the newly created argument
-            argDiv.scrollIntoView({ behavior: 'smooth' });
+            if (scroll) argDiv.scrollIntoView({ behavior: 'smooth' });
+            saveState();
         }
 
         // Call the Puter AI API to generate an argument
@@ -232,7 +271,16 @@ Respond ONLY with a valid JSON object in English, using this exact structure (do
 
         // Initialize with one blank argument on page load
         window.onload = () => {
-            addArgument();
+            const saved = loadState();
+            if (saved) {
+                document.getElementById('motion').value = saved.motion || '';
+                if (saved.stance) document.getElementById('stance').value = saved.stance;
+                saved.args.forEach(a => addArgument(a, false));
+            }
+            if (!document.querySelector('.argument-block')) addArgument({}, false);
+
+            document.addEventListener('input', saveState);
+            document.addEventListener('change', saveState);
         };
     </script>
 </body>
